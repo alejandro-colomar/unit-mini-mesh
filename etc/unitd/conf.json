@@ -1,0 +1,18 @@
+{
+    "listeners": {
+        "*:8080": { "pass": "applications/front" },
+        "*:8081": { "pass": "applications/back" }
+    },
+    "applications": {
+        "front": {
+            "type": "python",
+            "path": "/srv/www/",
+            "module": "wsgi-front"
+        },
+        "back": {
+            "type": "python",
+            "path": "/srv/www/",
+            "module": "wsgi-back"
+        }
+    }
+}
