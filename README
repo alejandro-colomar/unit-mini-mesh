@@ -1,0 +1,79 @@
+Value Proposition   For developers of microservices applications, Unit
+                    provides a runtime platform that enables simple
+                    service-to-service communication.  Unlike other
+                    microservices East-West communication solutions, Unit does
+                    so without any additional components.
+
+Rationale           Unit can co-locate multiple apps but requires an explicit
+                    localhost loopback for one application to reach another.
+                    This means writing localhost network addresses into the
+                    application code, which doesn’t scale very well.  It also
+                    exposes the East-West traffic to network inspection.  The
+                    rationale of this solution is to keep the traffic within
+                    the runtime context of Unit.
+
+How                 Catch or intercept the application’s outbound HTTP request,
+                    and send it straight back to the Unit router.
+
+                    Potential approaches:
+
+                    - A DNS intercept (or local resolver) for
+                      “application.local” (or similar), and routing.
+
+                    - HTTP forward proxy
+
+                    - eBPF program to intercept open(2) and redirect the
+                      connection.
+
+The Unit mini-mesh will allow developers to build true microservices
+applications --small components, independently built and deployed-- on a
+single Unit instance.  Where application A needs to call a service hosted by
+Unit (application X), the request is passed in the most efficient way, without
+requiring a full network hop.
+
+            +-----------------------------------+
+            |  Unit                             |
+            |             ,---[APPLICATION A]   |
+[client]--->|-->[ROUTER]-<                      |
+            |             `---[APPLICATION X]   |
+            |                                   |
+            +-----------------------------------+
+
+Scope
+=====
+
+The full potential of this solution will enable Unit-to-Unit communication
+between any applications hosted by any Unit instance.  For now, we are
+concerned with application-to-application traffic on a single Unit instance.
+
+Configuration experience
+========================
+
+We initially expect to define East-West traffic by extending the
+"applications" object to control the outbound connections of each application.
+The following configuration for illustration purposes.
+
+{
+    "applications": {
+        "calc": {
+            "type": "python",
+            "path": "/var/www/unit-calculator/main/",
+            "module": "main",
+            "outbound": {
+                "control": true,
+                "targets": {
+                    "hostname": "add.local",
+                    "application": "applications/add"
+                }
+            }
+        },
+
+        "add": {
+            "type": "python",
+            "path": "/var/www/unit-calculator/add/",
+            "module": "add"
+        }
+    }
+}
+
+The configuration requirements will emerge during the research phase.
